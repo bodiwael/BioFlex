@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "852584084808",
+    "firebase_url": "https://bioflex-237aa-default-rtdb.firebaseio.com",
+    "project_id": "bioflex-237aa",
+    "storage_bucket": "bioflex-237aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852584084808:android:db1281a1199c817b806f7d",
+        "android_client_info": {
+          "package_name": "com.bioflex.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyckuHOHAvFXFLBMwn7uvPqO8lDwhl2D4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
