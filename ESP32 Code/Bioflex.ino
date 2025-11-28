@@ -32,8 +32,6 @@ FirebaseAuth auth;
 #define MOTOR2_PIN 26     // Second vibration motor (PWM capable)
 #define PWM_FREQ 1000     // PWM frequency for motors
 #define PWM_RESOLUTION 8  // 8-bit resolution (0-255)
-#define PWM_CHANNEL_1 0   // PWM channel for motor 1
-#define PWM_CHANNEL_2 1   // PWM channel for motor 2
 
 // -------- EMG Feedback Thresholds --------
 #define EMG_THRESHOLD_LOW 100.0f    // Low activity threshold
@@ -59,15 +57,13 @@ void setup() {
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
 
-  // Configure PWM for vibration motors
-  ledcSetup(PWM_CHANNEL_1, PWM_FREQ, PWM_RESOLUTION);
-  ledcSetup(PWM_CHANNEL_2, PWM_FREQ, PWM_RESOLUTION);
-  ledcAttachPin(MOTOR1_PIN, PWM_CHANNEL_1);
-  ledcAttachPin(MOTOR2_PIN, PWM_CHANNEL_2);
+  // Configure PWM for vibration motors (ESP32 Core 3.x API)
+  ledcAttach(MOTOR1_PIN, PWM_FREQ, PWM_RESOLUTION);
+  ledcAttach(MOTOR2_PIN, PWM_FREQ, PWM_RESOLUTION);
 
   // Initialize motors to OFF
-  ledcWrite(PWM_CHANNEL_1, 0);
-  ledcWrite(PWM_CHANNEL_2, 0);
+  ledcWrite(MOTOR1_PIN, 0);
+  ledcWrite(MOTOR2_PIN, 0);
   Serial.println("✅ Vibration motors initialized");
 
   // Connect WiFi
@@ -155,8 +151,8 @@ void updateVibrationFeedback(float emgEnvelope) {
   }
 
   // Apply PWM values to motors
-  ledcWrite(PWM_CHANNEL_1, motorIntensity1);
-  ledcWrite(PWM_CHANNEL_2, motorIntensity2);
+  ledcWrite(MOTOR1_PIN, motorIntensity1);
+  ledcWrite(MOTOR2_PIN, motorIntensity2);
 }
 
 // ===========================================================
