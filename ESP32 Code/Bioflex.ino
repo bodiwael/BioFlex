@@ -27,6 +27,19 @@ FirebaseAuth auth;
 #define GSR_PIN 36        // GSR analog pin (ADC1_CH0)
 #define BLOCK_SIZE 100    // Number of samples per block
 
+// -------- Vibration Motor Config --------
+#define MOTOR1_PIN 25     // First vibration motor (PWM capable)
+#define MOTOR2_PIN 26     // Second vibration motor (PWM capable)
+#define PWM_FREQ 1000     // PWM frequency for motors
+#define PWM_RESOLUTION 8  // 8-bit resolution (0-255)
+#define PWM_CHANNEL_1 0   // PWM channel for motor 1
+#define PWM_CHANNEL_2 1   // PWM channel for motor 2
+
+// -------- EMG Feedback Thresholds --------
+#define EMG_THRESHOLD_LOW 100.0f    // Low activity threshold
+#define EMG_THRESHOLD_MED 300.0f    // Medium activity threshold
+#define EMG_THRESHOLD_HIGH 500.0f   // High activity threshold
+
 // -------- Objects --------
 CheezsEMG sEMG(INPUT_PIN, DETECT_PIN, SAMPLE_RATE);
 
@@ -45,6 +58,17 @@ void setup() {
   // Configure ADC
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db);
+
+  // Configure PWM for vibration motors
+  ledcSetup(PWM_CHANNEL_1, PWM_FREQ, PWM_RESOLUTION);
+  ledcSetup(PWM_CHANNEL_2, PWM_FREQ, PWM_RESOLUTION);
+  ledcAttachPin(MOTOR1_PIN, PWM_CHANNEL_1);
+  ledcAttachPin(MOTOR2_PIN, PWM_CHANNEL_2);
+
+  // Initialize motors to OFF
+  ledcWrite(PWM_CHANNEL_1, 0);
+  ledcWrite(PWM_CHANNEL_2, 0);
+  Serial.println("✅ Vibration motors initialized");
 
   // Connect WiFi
   Serial.print("Connecting to WiFi");
@@ -89,6 +113,9 @@ void loop() {
 
     sampleIndex++;
 
+    // Control vibration motors based on EMG envelope
+    updateVibrationFeedback(envelope);
+
     Serial.println(String(raw) + "," + String(filtered) + "," + String(envelope) + "," + String(gsrVolt));
 
     // Once buffer full, upload it
@@ -97,6 +124,39 @@ void loop() {
       sampleIndex = 0;
     }
   }
+}
+
+// ===========================================================
+// Control vibration motors based on EMG signal intensity
+void updateVibrationFeedback(float emgEnvelope) {
+  int motorIntensity1 = 0;
+  int motorIntensity2 = 0;
+
+  // Threshold-based vibration control
+  if (emgEnvelope < EMG_THRESHOLD_LOW) {
+    // Very low/no activity - motors off
+    motorIntensity1 = 0;
+    motorIntensity2 = 0;
+  }
+  else if (emgEnvelope < EMG_THRESHOLD_MED) {
+    // Low activity - gentle vibration on motor 1
+    motorIntensity1 = map(emgEnvelope, EMG_THRESHOLD_LOW, EMG_THRESHOLD_MED, 50, 120);
+    motorIntensity2 = 0;
+  }
+  else if (emgEnvelope < EMG_THRESHOLD_HIGH) {
+    // Medium activity - moderate vibration on both motors
+    motorIntensity1 = map(emgEnvelope, EMG_THRESHOLD_MED, EMG_THRESHOLD_HIGH, 120, 200);
+    motorIntensity2 = map(emgEnvelope, EMG_THRESHOLD_MED, EMG_THRESHOLD_HIGH, 80, 150);
+  }
+  else {
+    // High activity - strong vibration on both motors
+    motorIntensity1 = 255;
+    motorIntensity2 = 220;
+  }
+
+  // Apply PWM values to motors
+  ledcWrite(PWM_CHANNEL_1, motorIntensity1);
+  ledcWrite(PWM_CHANNEL_2, motorIntensity2);
 }
 
 // ===========================================================
